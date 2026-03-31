@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KAPCHA — 프리미엄 모자 스토어</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet" />
+  <style>
+    :root {
+      --accent: #f59e0b;
+      --accent-dim: #d97706;
+      --accent-glow: rgba(245, 158, 11, 0.18);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #09090b;
+      color: #fafafa;
+      overflow-x: hidden;
+    }
+
+    /* ── Floating Glass Nav ── */
+    .glass-nav {
+      backdrop-filter: blur(20px) saturate(1.8);
+      -webkit-backdrop-filter: blur(20px) saturate(1.8);
+      background: rgba(9, 9, 11, 0.72);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    /* ── Accent utilities ── */
+    .text-accent { color: var(--accent); }
+    .bg-accent   { background: var(--accent); }
+    .border-accent { border-color: var(--accent); }
+
+    /* ── Double-bezel card ── */
+    .card-bezel {
+      background: #18181b;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 3px;
+    }
+    .card-bezel-inner {
+      background: #1c1c1f;
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    /* ── Product card hover ── */
+    .product-card {
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  box-shadow 0.4s ease;
+      will-change: transform;
+    }
+    .product-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 32px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(245,158,11,0.2);
+    }
+
+    /* ── Spring button ── */
+    .btn-spring {
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  background 0.2s ease,
+                  box-shadow 0.3s ease;
+      will-change: transform;
+    }
+    .btn-spring:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 32px var(--accent-glow);
+    }
+    .btn-spring:active { transform: scale(0.97); }
+
+    /* ── Hero noise overlay ── */
+    .noise::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* ── Tag badge ── */
+    .tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* ── Marquee ── */
+    @keyframes marquee {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+    .marquee-track {
+      display: flex;
+      width: max-content;
+      animation: marquee 22s linear infinite;
+    }
+
+    /* ── Fade-up on scroll ── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .fade-up.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── Testimonial masonry ── */
+    .masonry {
+      columns: 3;
+      column-gap: 20px;
+    }
+    @media (max-width: 1024px) { .masonry { columns: 2; } }
+    @media (max-width: 640px)  { .masonry { columns: 1; } }
+    .masonry > * { break-inside: avoid; margin-bottom: 20px; }
+
+    /* ── Highlight span ── */
+    .hl {
+      background: linear-gradient(120deg, rgba(245,158,11,0.22) 0%, rgba(245,158,11,0.08) 100%);
+      border-radius: 4px;
+      padding: 0 4px;
+      color: var(--accent);
+    }
+
+    /* ── Divider line ── */
+    hr.subtle { border-color: rgba(255,255,255,0.07); }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════
+     FLOATING GLASS NAVIGATION
+════════════════════════════════════ -->
+<header class="glass-nav fixed top-0 left-0 right-0 z-50">
+  <div class="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
+    <!-- Logo -->
+    <a href="#" class="flex items-center gap-2.5 group">
+      <div class="w-8 h-8 rounded-xl bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#09090b" stroke-width="2.5" stroke-linecap="round">
+          <path d="M3 9c0 0 2-2 9-2s9 2 9 2v2H3V9z"/>
+          <path d="M3 11v6a9 9 0 0 0 18 0v-6"/>
+          <path d="M12 7V4"/>
+        </svg>
+      </div>
+      <span class="font-bold text-lg tracking-tight text-white group-hover:text-amber-400 transition-colors">KAPCHA</span>
+    </a>
+
+    <!-- Nav Links -->
+    <nav class="hidden md:flex items-center gap-8">
+      <a href="#products" class="text-sm text-zinc-400 hover:text-white transition-colors">컬렉션</a>
+      <a href="#about" class="text-sm text-zinc-400 hover:text-white transition-colors">브랜드</a>
+      <a href="#reviews" class="text-sm text-zinc-400 hover:text-white transition-colors">리뷰</a>
+      <a href="#faq" class="text-sm text-zinc-400 hover:text-white transition-colors">FAQ</a>
+    </nav>
+
+    <!-- CTA -->
+    <div class="flex items-center gap-3">
+      <button class="relative text-zinc-400 hover:text-white transition-colors">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 01-8 0"/>
+        </svg>
+        <span class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-amber-500 rounded-full text-[9px] font-bold text-zinc-900 flex items-center justify-center">3</span>
+      </button>
+      <a href="#products" class="btn-spring hidden sm:inline-flex items-center gap-2 bg-amber-500 text-zinc-900 text-sm font-semibold px-4 py-2 rounded-xl">
+        지금 쇼핑하기
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+
+<!-- ════════════════════════════════════
+     HERO — FULL-BLEED ASYMMETRIC
+════════════════════════════════════ -->
+<section class="noise relative min-h-screen flex items-center pt-16 overflow-hidden">
+  <!-- Background grid -->
+  <div class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-[size:72px_72px]"></div>
+  <!-- Radial glow -->
+  <div class="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[600px] rounded-full bg-amber-500/8 blur-[120px] pointer-events-none"></div>
+
+  <div class="relative z-10 max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center py-24">
+    <!-- Text -->
+    <div>
+      <div class="tag bg-amber-500/15 border border-amber-500/30 text-amber-400 mb-6">
+        2025 신규 컬렉션 출시
+      </div>
+      <h1 class="text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.05] tracking-tight mb-6">
+        당신의 스타일을<br />
+        <span class="text-accent">완성하는</span><br />
+        모자 하나
+      </h1>
+      <p class="text-zinc-400 text-lg leading-relaxed max-w-md mb-10">
+        프리미엄 소재, 타협 없는 디테일. KAPCHA의 모자는
+        단순한 액세서리가 아니라 <span class="hl">당신의 아이덴티티</span>입니다.
+      </p>
+      <div class="flex flex-wrap items-center gap-4">
+        <a href="#products" class="btn-spring inline-flex items-center gap-2 bg-amber-500 text-zinc-900 font-bold px-7 py-3.5 rounded-2xl text-base shadow-lg shadow-amber-500/25">
+          컬렉션 보기
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <a href="#about" class="inline-flex items-center gap-2 text-zinc-300 hover:text-white text-base font-medium transition-colors">
+          브랜드 스토리
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <!-- Social proof pills -->
+      <div class="mt-12 flex flex-wrap gap-6">
+        <div>
+          <p class="text-3xl font-black text-white">12,400+</p>
+          <p class="text-sm text-zinc-500 mt-0.5">만족한 고객</p>
+        </div>
+        <div class="w-px bg-zinc-800"></div>
+        <div>
+          <p class="text-3xl font-black text-white">4.9 ★</p>
+          <p class="text-sm text-zinc-500 mt-0.5">평균 평점</p>
+        </div>
+        <div class="w-px bg-zinc-800"></div>
+        <div>
+          <p class="text-3xl font-black text-white">48h</p>
+          <p class="text-sm text-zinc-500 mt-0.5">빠른 배송</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hero Visual — stacked product cards -->
+    <div class="relative flex justify-center lg:justify-end">
+      <div class="relative w-80 h-96">
+        <!-- Back card -->
+        <div class="absolute top-6 right-0 w-64 h-80 card-bezel rotate-6 opacity-60">
+          <div class="card-bezel-inner h-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center">
+            <span class="text-6xl">🧢</span>
+          </div>
+        </div>
+        <!-- Front card -->
+        <div class="relative card-bezel product-card w-72 h-88 z-10">
+          <div class="card-bezel-inner h-full">
+            <div class="h-56 bg-gradient-to-br from-amber-950/60 via-zinc-800 to-zinc-900 flex items-center justify-center relative overflow-hidden">
+              <div class="absolute inset-0 bg-gradient-to-t from-zinc-900/80 to-transparent"></div>
+              <span class="text-8xl drop-shadow-2xl">🧢</span>
+              <div class="absolute top-3 right-3 tag bg-amber-500 text-zinc-900">BEST</div>
+            </div>
+            <div class="p-5">
+              <p class="text-xs text-zinc-500 mb-1">KAPCHA ORIGINALS</p>
+              <p class="font-bold text-white text-lg leading-tight">클래식 버킷햇</p>
+              <div class="flex items-center justify-between mt-3">
+                <p class="text-xl font-black text-accent">₩42,000</p>
+                <button class="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center text-zinc-900 btn-spring">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════
+     MARQUEE STRIP
+════════════════════════════════════ -->
+<div class="py-4 border-y border-zinc-800 overflow-hidden bg-zinc-950">
+  <div class="marquee-track select-none">
+    <div class="flex gap-10 pr-10 whitespace-nowrap">
+      <span class="text-zinc-500 text-sm font-medium">🧢 무료 배송 5만원 이상</span>
+      <span class="text-amber-500 text-sm font-medium">★</span>
+      <span class="text-zinc-500 text-sm font-medium">🔄 30일 무료 반품</span>
+      <span class="text-amber-500 text-sm font-medium">★</span>
+      <span class="text-zinc-500 text-sm font-medium">🎁 신규 가입 10% 할인</span>
+      <span class="text-amber-500 text-sm font-medium">★</span>
+      <span class="text-zinc-500 text-sm font-medium">🏆 12,400+ 고객 신뢰</span>
+      <span class="text-amber-500 text-sm font-medium">★</span>
+      <span class="text-zinc-500 text-sm font-medium">🌿 지속가능한 소재 사용</span>
+      <span class="text-amber-500 text-sm font-medium">★</span>
+      <span class="text-zinc-500 text-sm font-medium">⚡ 당일 출고 오후 2시 이전</span>
+      <span class="text-amber-500 text-sm font-medium">★</span>
+    </div>
+    <!-- duplicate for seamless loop -->
+    <div class="flex gap-10 pr-10 whitespace-nowrap">
+      <span class="text-zinc-500 text-sm font-medium">🧢 무료 배송 5만원 이상</span>
+      <span class="text-amber-500 text-sm font-medium">★</span>
+      <span class="text-zinc-500 text-sm font-medium">🔄 30일 무료 반품</span>
+      <span class="text-amber-500 text-sm font-medium">★</span>
+      <span class="text-zinc-500 text-sm font-medium">🎁 신규 가입 10% 할인</span>
+      <span class="text-amber-500 text-sm font-medium">★</span>
+      <span class="text-zinc-500 text-sm font-medium">🏆 12,400+ 고객 신뢰</span>
+      <span class="text-amber-500 text-sm font-medium">★</span>
+      <span class="text-zinc-500 text-sm font-medium">🌿 지속가능한 소재 사용</span>
+      <span class="text-amber-500 text-sm font-medium">★</span>
+      <span class="text-zinc-500 text-sm font-medium">⚡ 당일 출고 오후 2시 이전</span>
+      <span class="text-amber-500 text-sm font-medium">★</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════
+     PRODUCTS — BENTO GRID
+════════════════════════════════════ -->
+<section id="products" class="py-32 bg-zinc-950">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-16 fade-up">
+      <div>
+        <p class="section-label mb-3">2025 컬렉션</p>
+        <h2 class="text-4xl sm:text-5xl font-black leading-tight">지금 가장 핫한<br /><span class="text-accent">베스트셀러</span></h2>
+      </div>
+      <a href="#" class="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white border border-zinc-700 hover:border-zinc-500 px-5 py-2.5 rounded-xl transition-all self-start sm:self-auto">
+        전체 보기
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+
+    <!-- Bento grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+      <!-- Product 1 — Tall featured -->
+      <div class="card-bezel product-card sm:row-span-2 fade-up">
+        <div class="card-bezel-inner h-full flex flex-col">
+          <div class="relative flex-1 min-h-72 bg-gradient-to-br from-stone-800/80 via-zinc-800 to-zinc-900 flex items-center justify-center overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-transparent to-transparent"></div>
+            <span class="text-[120px] leading-none">🎩</span>
+            <div class="absolute top-4 left-4 tag bg-amber-500 text-zinc-900">BEST SELLER</div>
+            <div class="absolute bottom-4 left-4 right-4">
+              <p class="text-xs text-zinc-400 mb-1">KAPCHA SIGNATURE</p>
+              <p class="text-xl font-black text-white">페도라 헤리티지</p>
+            </div>
+          </div>
+          <div class="p-5">
+            <p class="text-sm text-zinc-400 leading-relaxed mb-4">빈티지 울 펠트 소재로 제작된 시그니처 페도라. 어떤 무드에도 어울리는 클래식한 실루엣.</p>
+            <div class="flex items-center gap-2 mb-4">
+              <div class="flex gap-0.5">
+                <span class="text-amber-400 text-sm">★★★★★</span>
+              </div>
+              <span class="text-xs text-zinc-500">(342)</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-2xl font-black text-accent">₩68,000</p>
+                <p class="text-xs text-zinc-600 line-through">₩85,000</p>
+              </div>
+              <button onclick="addToCart(this)" class="btn-spring flex items-center gap-2 bg-amber-500 text-zinc-900 font-semibold text-sm px-4 py-2.5 rounded-xl">
+                담기
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 2 -->
+      <div class="card-bezel product-card fade-up" style="transition-delay: 0.1s">
+        <div class="card-bezel-inner">
+          <div class="relative h-52 bg-gradient-to-br from-zinc-700/50 via-zinc-800 to-zinc-900 flex items-center justify-center overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-t from-zinc-950/80 to-transparent"></div>
+            <span class="text-8xl">🧢</span>
+            <div class="absolute top-3 right-3 tag bg-zinc-700 text-zinc-200">NEW</div>
+          </div>
+          <div class="p-5">
+            <p class="text-xs text-zinc-500 mb-1">CASUAL SERIES</p>
+            <p class="font-bold text-white text-lg">오버핏 볼캡</p>
+            <div class="flex items-center justify-between mt-3">
+              <p class="text-xl font-black text-accent">₩38,000</p>
+              <button onclick="addToCart(this)" class="btn-spring w-9 h-9 rounded-xl bg-zinc-700 hover:bg-amber-500 hover:text-zinc-900 flex items-center justify-center text-white transition-colors">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 3 -->
+      <div class="card-bezel product-card fade-up" style="transition-delay: 0.15s">
+        <div class="card-bezel-inner">
+          <div class="relative h-52 bg-gradient-to-br from-amber-950/40 via-zinc-800 to-zinc-900 flex items-center justify-center overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-t from-zinc-950/80 to-transparent"></div>
+            <span class="text-8xl">🪖</span>
+          </div>
+          <div class="p-5">
+            <p class="text-xs text-zinc-500 mb-1">OUTDOOR LINE</p>
+            <p class="font-bold text-white text-lg">밀리터리 버킷햇</p>
+            <div class="flex items-center justify-between mt-3">
+              <p class="text-xl font-black text-accent">₩45,000</p>
+              <button onclick="addToCart(this)" class="btn-spring w-9 h-9 rounded-xl bg-zinc-700 hover:bg-amber-500 hover:text-zinc-900 flex items-center justify-center text-white transition-colors">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 4 -->
+      <div class="card-bezel product-card fade-up" style="transition-delay: 0.2s">
+        <div class="card-bezel-inner">
+          <div class="relative h-52 bg-gradient-to-br from-zinc-800 via-stone-800/50 to-zinc-900 flex items-center justify-center overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-t from-zinc-950/80 to-transparent"></div>
+            <span class="text-8xl">👒</span>
+            <div class="absolute top-3 left-3 tag bg-amber-500/20 border border-amber-500/40 text-amber-400">LIMITED</div>
+          </div>
+          <div class="p-5">
+            <p class="text-xs text-zinc-500 mb-1">PREMIUM SERIES</p>
+            <p class="font-bold text-white text-lg">파나마 썸머햇</p>
+            <div class="flex items-center justify-between mt-3">
+              <p class="text-xl font-black text-accent">₩72,000</p>
+              <button onclick="addToCart(this)" class="btn-spring w-9 h-9 rounded-xl bg-zinc-700 hover:bg-amber-500 hover:text-zinc-900 flex items-center justify-center text-white transition-colors">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 5 -->
+      <div class="card-bezel product-card fade-up" style="transition-delay: 0.25s">
+        <div class="card-bezel-inner">
+          <div class="relative h-52 bg-gradient-to-br from-zinc-900 via-zinc-800 to-stone-900/60 flex items-center justify-center overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-t from-zinc-950/80 to-transparent"></div>
+            <span class="text-8xl">🎓</span>
+          </div>
+          <div class="p-5">
+            <p class="text-xs text-zinc-500 mb-1">STREET LINE</p>
+            <p class="font-bold text-white text-lg">플랫캡 스냅백</p>
+            <div class="flex items-center justify-between mt-3">
+              <p class="text-xl font-black text-accent">₩32,000</p>
+              <button onclick="addToCart(this)" class="btn-spring w-9 h-9 rounded-xl bg-zinc-700 hover:bg-amber-500 hover:text-zinc-900 flex items-center justify-center text-white transition-colors">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════
+     FEATURES — ASYMMETRIC 3-COL
+════════════════════════════════════ -->
+<section id="about" class="py-32 bg-[#0a0a0d] border-t border-zinc-800/60">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="grid lg:grid-cols-2 gap-20 items-center">
+      <!-- Left: big statement -->
+      <div class="fade-up">
+        <p class="section-label mb-4">왜 KAPCHA인가</p>
+        <h2 class="text-4xl sm:text-5xl font-black leading-tight mb-8">
+          평범한 모자는<br />이제 그만.<br />
+          <span class="text-accent">디테일이 다르다.</span>
+        </h2>
+        <p class="text-zinc-400 text-lg leading-relaxed mb-10">
+          KAPCHA는 2019년, 단 하나의 신념으로 시작했습니다.
+          모자도 명품이 될 수 있다는 것. 국내 장인이 한 땀 한 땀 마감한
+          스티칭, 유럽에서 직수입한 울 펠트, 땀 흡수 항균 처리된 내피까지
+          — 모든 과정이 <span class="hl">퀄리티 퍼스트</span>입니다.
+        </p>
+        <a href="#products" class="btn-spring inline-flex items-center gap-2 border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 px-6 py-3 rounded-xl text-sm font-semibold transition-colors">
+          제품 살펴보기
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <!-- Right: feature pills grid -->
+      <div class="grid grid-cols-2 gap-4 fade-up" style="transition-delay: 0.15s">
+
+        <div class="card-bezel col-span-2">
+          <div class="card-bezel-inner p-5 flex gap-4 items-start">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center flex-shrink-0 text-xl">🌿</div>
+            <div>
+              <p class="font-bold text-white mb-1">지속가능한 소재</p>
+              <p class="text-sm text-zinc-400 leading-relaxed">GRS 인증 재활용 원단과 유기농 면을 사용합니다. 지구에 부담을 줄이는 패션.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-bezel">
+          <div class="card-bezel-inner p-5">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center mb-3 text-xl">✂️</div>
+            <p class="font-bold text-white mb-1">국내 장인 제작</p>
+            <p class="text-sm text-zinc-400">대구 봉제 명인이 직접 마감하는 핸드메이드 퀄리티</p>
+          </div>
+        </div>
+
+        <div class="card-bezel">
+          <div class="card-bezel-inner p-5">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center mb-3 text-xl">📐</div>
+            <p class="font-bold text-white mb-1">맞춤 사이즈</p>
+            <p class="text-sm text-zinc-400">S-XL 전 사이즈, 사이즈 고민 시 무료 교환 보장</p>
+          </div>
+        </div>
+
+        <div class="card-bezel">
+          <div class="card-bezel-inner p-5">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center mb-3 text-xl">🛡️</div>
+            <p class="font-bold text-white mb-1">1년 품질 보증</p>
+            <p class="text-sm text-zinc-400">소재 불량 및 봉제 하자 1년 무상 수선</p>
+          </div>
+        </div>
+
+        <div class="card-bezel">
+          <div class="card-bezel-inner p-5">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center mb-3 text-xl">⚡</div>
+            <p class="font-bold text-white mb-1">당일 출고</p>
+            <p class="text-sm text-zinc-400">오후 2시 이전 결제 완료 시 당일 발송</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════
+     SOCIAL PROOF — STATS BAND
+════════════════════════════════════ -->
+<div class="py-16 bg-zinc-950 border-y border-zinc-800/60 fade-up">
+  <div class="max-w-5xl mx-auto px-6 grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
+    <div>
+      <p class="text-4xl font-black text-white mb-1">12,400<span class="text-accent">+</span></p>
+      <p class="text-sm text-zinc-500">누적 구매 고객</p>
+    </div>
+    <div>
+      <p class="text-4xl font-black text-white mb-1">4.9<span class="text-accent">★</span></p>
+      <p class="text-sm text-zinc-500">평균 리뷰 점수</p>
+    </div>
+    <div>
+      <p class="text-4xl font-black text-white mb-1">98<span class="text-accent">%</span></p>
+      <p class="text-sm text-zinc-500">재구매 의향</p>
+    </div>
+    <div>
+      <p class="text-4xl font-black text-white mb-1">6<span class="text-accent">년</span></p>
+      <p class="text-sm text-zinc-500">브랜드 운영 경력</p>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════
+     TESTIMONIALS — MASONRY
+════════════════════════════════════ -->
+<section id="reviews" class="py-32 bg-[#0a0a0d]">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center mb-16 fade-up">
+      <p class="section-label mb-3">고객 리뷰</p>
+      <h2 class="text-4xl sm:text-5xl font-black">실제 구매자들의<br /><span class="text-accent">솔직한 후기</span></h2>
+    </div>
+
+    <div class="masonry fade-up">
+
+      <div class="card-bezel">
+        <div class="card-bezel-inner p-6">
+          <div class="flex gap-0.5 mb-3">
+            <span class="text-amber-400 text-sm">★★★★★</span>
+          </div>
+          <p class="text-zinc-300 text-sm leading-relaxed mb-4">"페도라 헤리티지 구매했는데 진짜 퀄리티가 말이 안 됩니다. 소재 자체가 달라요. 백화점 10만원짜리랑 비교해도 손색없어요."</p>
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-sm font-bold text-amber-400">김</div>
+            <div>
+              <p class="text-sm font-semibold text-white">김지훈</p>
+              <p class="text-xs text-zinc-500">서울 · 페도라 헤리티지 구매</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-bezel">
+        <div class="card-bezel-inner p-6">
+          <div class="flex gap-0.5 mb-3">
+            <span class="text-amber-400 text-sm">★★★★★</span>
+          </div>
+          <p class="text-zinc-300 text-sm leading-relaxed mb-4">"배송이 진짜 빠름. 오전에 주문했더니 저녁에 왔어요. 볼캡 색감도 사진이랑 똑같고 내피 마감이 너무 깔끔해요. 남자친구한테도 선물했어요."</p>
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-sm font-bold text-amber-400">박</div>
+            <div>
+              <p class="text-sm font-semibold text-white">박소연</p>
+              <p class="text-xs text-zinc-500">부산 · 오버핏 볼캡 구매</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-bezel">
+        <div class="card-bezel-inner p-6">
+          <div class="flex gap-0.5 mb-3">
+            <span class="text-amber-400 text-sm">★★★★☆</span>
+          </div>
+          <p class="text-zinc-300 text-sm leading-relaxed mb-4">"사이즈가 좀 크게 나오는 편인데 교환 요청했더니 바로 처리해줬어요. CS 대응이 정말 친절하고 빠릅니다. 모자 자체는 정말 만족해요."</p>
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-sm font-bold text-amber-400">이</div>
+            <div>
+              <p class="text-sm font-semibold text-white">이민준</p>
+              <p class="text-xs text-zinc-500">대구 · 밀리터리 버킷햇 구매</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-bezel">
+        <div class="card-bezel-inner p-6">
+          <div class="flex gap-0.5 mb-3">
+            <span class="text-amber-400 text-sm">★★★★★</span>
+          </div>
+          <p class="text-zinc-300 text-sm leading-relaxed mb-4">"파나마햇 여름 내내 잘 쓰고 있어요. 세척 후에도 모양이 그대로 유지되는 게 신기해요. 가격 대비 정말 최고입니다."</p>
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-sm font-bold text-amber-400">최</div>
+            <div>
+              <p class="text-sm font-semibold text-white">최수진</p>
+              <p class="text-xs text-zinc-500">제주 · 파나마 썸머햇 구매</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-bezel">
+        <div class="card-bezel-inner p-6">
+          <div class="flex gap-0.5 mb-3">
+            <span class="text-amber-400 text-sm">★★★★★</span>
+          </div>
+          <p class="text-zinc-300 text-sm leading-relaxed mb-4">"처음엔 가격이 좀 부담이었는데 받아보니 왜 이 가격인지 이해가 갔어요. 리얼 가죽 밴드 디테일이 너무 고급스러워요. 벌써 3개째 구매입니다."</p>
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-sm font-bold text-amber-400">정</div>
+            <div>
+              <p class="text-sm font-semibold text-white">정태호</p>
+              <p class="text-xs text-zinc-500">인천 · 3회 재구매</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-bezel">
+        <div class="card-bezel-inner p-6">
+          <div class="flex gap-0.5 mb-3">
+            <span class="text-amber-400 text-sm">★★★★★</span>
+          </div>
+          <p class="text-zinc-300 text-sm leading-relaxed mb-4">"SNS에서 협찬인 줄 알고 의심했는데 직접 사보고 반했어요. 스냅백 스트랩 조절이 엄청 정밀하고 내구성이 좋아요. 강추합니다."</p>
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-sm font-bold text-amber-400">강</div>
+            <div>
+              <p class="text-sm font-semibold text-white">강현우</p>
+              <p class="text-xs text-zinc-500">광주 · 플랫캡 스냅백 구매</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════
+     FAQ
+════════════════════════════════════ -->
+<section id="faq" class="py-32 bg-zinc-950 border-t border-zinc-800/60">
+  <div class="max-w-3xl mx-auto px-6">
+    <div class="text-center mb-16 fade-up">
+      <p class="section-label mb-3">자주 묻는 질문</p>
+      <h2 class="text-4xl font-black">궁금한 것들을<br />미리 알려드릴게요</h2>
+    </div>
+
+    <div class="space-y-3 fade-up">
+
+      <details class="card-bezel group">
+        <summary class="card-bezel-inner p-5 flex items-center justify-between cursor-pointer list-none select-none">
+          <span class="font-semibold text-white">배송은 얼마나 걸리나요?</span>
+          <svg class="text-zinc-500 group-open:rotate-180 transition-transform" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </summary>
+        <div class="px-5 pb-5 text-sm text-zinc-400 leading-relaxed -mt-1">
+          오후 2시 이전 결제 완료 시 당일 출고됩니다. 일반 배송(CJ대한통운)은 1-2 영업일이며, 제주 및 도서산간 지역은 추가 1-2일이 소요됩니다.
+        </div>
+      </details>
+
+      <details class="card-bezel group">
+        <summary class="card-bezel-inner p-5 flex items-center justify-between cursor-pointer list-none select-none">
+          <span class="font-semibold text-white">사이즈가 맞지 않으면 교환 가능한가요?</span>
+          <svg class="text-zinc-500 group-open:rotate-180 transition-transform" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </summary>
+        <div class="px-5 pb-5 text-sm text-zinc-400 leading-relaxed -mt-1">
+          수령 후 30일 이내라면 미착용 제품에 한해 무료 교환이 가능합니다. 고객센터로 교환 신청 시 왕복 배송비 없이 처리해 드립니다.
+        </div>
+      </details>
+
+      <details class="card-bezel group">
+        <summary class="card-bezel-inner p-5 flex items-center justify-between cursor-pointer list-none select-none">
+          <span class="font-semibold text-white">어떻게 세탁하나요?</span>
+          <svg class="text-zinc-500 group-open:rotate-180 transition-transform" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </summary>
+        <div class="px-5 pb-5 text-sm text-zinc-400 leading-relaxed -mt-1">
+          제품마다 소재가 다르므로 각 제품 내 태그의 세탁 지침을 따르시는 것을 권장합니다. 일반적으로 손세탁 후 그늘에서 자연 건조를 권장하며, 모양 유지를 위해 건조기는 피해주세요.
+        </div>
+      </details>
+
+      <details class="card-bezel group">
+        <summary class="card-bezel-inner p-5 flex items-center justify-between cursor-pointer list-none select-none">
+          <span class="font-semibold text-white">단체 주문 및 기업 선물 가능한가요?</span>
+          <svg class="text-zinc-500 group-open:rotate-180 transition-transform" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </summary>
+        <div class="px-5 pb-5 text-sm text-zinc-400 leading-relaxed -mt-1">
+          10개 이상 주문 시 별도 할인이 적용됩니다. 로고 자수, 커스텀 라벨, 선물 포장 서비스도 제공하고 있습니다. 이메일(b2b@kapcha.kr)로 문의해 주세요.
+        </div>
+      </details>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════
+     CTA — FULL-BLEED
+════════════════════════════════════ -->
+<section class="relative py-32 overflow-hidden bg-[#0a0a0d] border-t border-zinc-800/60">
+  <!-- Decorative blob -->
+  <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+    <div class="w-[800px] h-[400px] bg-amber-500/10 blur-[100px] rounded-full"></div>
+  </div>
+  <div class="relative z-10 max-w-4xl mx-auto px-6 text-center fade-up">
+    <p class="section-label mb-4">지금 바로 시작하세요</p>
+    <h2 class="text-5xl sm:text-6xl font-black leading-tight mb-6">
+      첫 구매 <span class="text-accent">10% 할인</span><br />
+      오늘만 적용됩니다
+    </h2>
+    <p class="text-zinc-400 text-lg max-w-xl mx-auto mb-10">
+      이메일 가입 시 즉시 사용 가능한 할인 코드를 드립니다.<br />
+      무료 배송 혜택과 함께 신규 컬렉션을 가장 먼저 만나보세요.
+    </p>
+    <form onsubmit="handleEmail(event)" class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto mb-6">
+      <input
+        type="email"
+        placeholder="이메일 주소를 입력하세요"
+        class="flex-1 bg-zinc-900 border border-zinc-700 focus:border-amber-500 focus:outline-none text-white placeholder-zinc-500 px-5 py-3.5 rounded-xl text-sm transition-colors"
+        required
+      />
+      <button type="submit" class="btn-spring bg-amber-500 text-zinc-900 font-bold px-6 py-3.5 rounded-xl text-sm whitespace-nowrap shadow-lg shadow-amber-500/25">
+        할인코드 받기
+      </button>
+    </form>
+    <p class="text-xs text-zinc-600">스팸 없음. 언제든 수신 거부 가능.</p>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════
+     FOOTER
+════════════════════════════════════ -->
+<footer class="bg-zinc-950 border-t border-zinc-800/60 py-16">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
+      <!-- Brand -->
+      <div class="lg:col-span-2">
+        <div class="flex items-center gap-2.5 mb-4">
+          <div class="w-8 h-8 rounded-xl bg-amber-500 flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#09090b" stroke-width="2.5" stroke-linecap="round">
+              <path d="M3 9c0 0 2-2 9-2s9 2 9 2v2H3V9z"/>
+              <path d="M3 11v6a9 9 0 0 0 18 0v-6"/>
+              <path d="M12 7V4"/>
+            </svg>
+          </div>
+          <span class="font-bold text-lg text-white tracking-tight">KAPCHA</span>
+        </div>
+        <p class="text-zinc-500 text-sm leading-relaxed max-w-xs">
+          2019년 대구에서 시작한 프리미엄 모자 브랜드. 장인 정신과 현대적 감성의 결합.
+        </p>
+      </div>
+
+      <!-- Links -->
+      <div>
+        <p class="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">쇼핑</p>
+        <ul class="space-y-2.5">
+          <li><a href="#" class="text-sm text-zinc-500 hover:text-white transition-colors">신상품</a></li>
+          <li><a href="#" class="text-sm text-zinc-500 hover:text-white transition-colors">베스트셀러</a></li>
+          <li><a href="#" class="text-sm text-zinc-500 hover:text-white transition-colors">세일</a></li>
+          <li><a href="#" class="text-sm text-zinc-500 hover:text-white transition-colors">기프트카드</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <p class="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">고객지원</p>
+        <ul class="space-y-2.5">
+          <li><a href="#" class="text-sm text-zinc-500 hover:text-white transition-colors">주문 조회</a></li>
+          <li><a href="#" class="text-sm text-zinc-500 hover:text-white transition-colors">교환 / 반품</a></li>
+          <li><a href="#faq" class="text-sm text-zinc-500 hover:text-white transition-colors">FAQ</a></li>
+          <li><a href="#" class="text-sm text-zinc-500 hover:text-white transition-colors">1:1 문의</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <hr class="subtle mb-6" />
+
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <p class="text-xs text-zinc-600">© 2025 KAPCHA. All rights reserved. 사업자등록번호: 123-45-67890</p>
+      <div class="flex gap-6">
+        <a href="#" class="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">개인정보처리방침</a>
+        <a href="#" class="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">이용약관</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+<!-- ════════════════════════════════════
+     CART TOAST
+════════════════════════════════════ -->
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-all duration-500 translate-y-4">
+  <div class="flex items-center gap-3 bg-zinc-800 border border-zinc-600/60 px-5 py-3.5 rounded-2xl shadow-2xl whitespace-nowrap">
+    <div class="w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#09090b" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <span class="text-sm font-medium text-white">장바구니에 담았습니다!</span>
+    <a href="#" class="text-xs text-amber-400 hover:text-amber-300 font-semibold pointer-events-auto">보기</a>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════
+     SCRIPTS
+════════════════════════════════════ -->
+<script>
+  // Intersection Observer for fade-up
+  const observer = new IntersectionObserver(
+    (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+    { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
+  );
+  document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+  // Cart toast
+  function showToast() {
+    const t = document.getElementById('toast');
+    t.style.opacity = '1';
+    t.style.transform = 'translateX(-50%) translateY(0)';
+    setTimeout(() => {
+      t.style.opacity = '0';
+      t.style.transform = 'translateX(-50%) translateY(16px)';
+    }, 2400);
+  }
+
+  // Cart count
+  let cartCount = 3;
+  function addToCart(btn) {
+    cartCount++;
+    const badge = document.querySelector('header .absolute');
+    if (badge) badge.textContent = cartCount;
+    showToast();
+    btn.textContent = '✓';
+    btn.classList.add('bg-zinc-600');
+    btn.classList.remove('bg-amber-500');
+    setTimeout(() => {
+      btn.innerHTML = `담기 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>`;
+      btn.classList.remove('bg-zinc-600');
+      btn.classList.add('bg-amber-500');
+    }, 1800);
+  }
+
+  // Email form
+  function handleEmail(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('button');
+    btn.textContent = '✓ 전송됨!';
+    btn.classList.add('bg-zinc-700', 'text-zinc-300');
+    btn.classList.remove('bg-amber-500', 'text-zinc-900');
+    e.target.querySelector('input').value = '';
+  }
+
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const id = a.getAttribute('href').slice(1);
+      const el = document.getElementById(id);
+      if (el) { e.preventDefault(); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    });
+  });
+</script>
+
+</body>
+</html>
